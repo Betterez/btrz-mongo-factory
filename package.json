@@ -1,0 +1,38 @@
+{
+  "name": "mongo-factory",
+  "version": "1.0.0",
+  "description": "\"A factory to create data in a mongoDb using chance and Json-Schema\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "multi='xunit=test-results/xunit.xml spec=-' node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- --ui bdd -R mocha-multi -t 5000",
+    "test-w": "node_modules/mocha/bin/mocha -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Betterez/mongo-factory.git"
+  },
+  "keywords": [
+    "API",
+    "Auth",
+    "X-API-KEY"
+  ],
+  "author": "Betterez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Betterez/mongo-factory/issues"
+  },
+  "homepage": "https://github.com/Betterez/mongo-factory",
+  "dependencies": {
+    "json-schema-faker": "^0.1.5",
+    "lodash": "^2.4.1",
+    "promised-mongo": "^0.11.1"
+  },
+  "devDependencies": {
+    "chai": "latest",
+    "istanbul-harmony": "^0.3.1",
+    "mocha": "latest",
+    "mocha-multi": "latest",
+    "sinon": "latest",
+    "xunit-file": "latest"
+  }
+}
