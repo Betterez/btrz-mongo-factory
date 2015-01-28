@@ -3,7 +3,7 @@
 
 describe("MongoFactory", function () {
 
-  let MongoFactory = require("../"),
+  let MongoFactory = require("../").MongoFactory,
     expect = require("chai").expect,
     factory;
 
@@ -12,7 +12,7 @@ describe("MongoFactory", function () {
       fixtures: `${__dirname}/fixtures`,
       "db": {
           "options": {
-            "database": "betterez_core",
+            "database": "btrzMongoFactory",
             "username": "",
             "password": ""
           },
@@ -67,6 +67,37 @@ describe("MongoFactory", function () {
         done();
       });
     });
+
+    it("should create an object with an schema and a $ref", function (done) {
+      factory.create("account", {}, [factory.fixtures("tags")]).then(function (model) {
+        expect(model.name).to.not.be.undefined;
+        expect(model.tags.length).to.not.be.eql(0);
+        expect(model.tags[0].id).to.not.be.undefined;
+        expect(model.tags[0].name).to.not.be.undefined;
+        done();
+      });
+    });
+
+    it("should throw if references is not an array", function () {
+      function sut() {
+        factory.create("account", {}, "not-an-array")
+      }
+      expect(sut).to.throw();
+    });
+
+    it("should throw is references contains undefined", function () {
+      function sut() {
+        factory.create("account", {}, [undefined]);
+      }
+      expect(sut).to.throw("There was a problem with the references array, make sure it contains json-schemas");
+    });
+
+    it("should throw is references contains null", function () {
+        function sut() {
+          factory.create("account", {}, [null]);
+        }
+        expect(sut).to.throw("There was a problem with the references array, make sure it contains json-schemas");
+    });
   });
 
   describe("createList", function () {
@@ -85,6 +116,18 @@ describe("MongoFactory", function () {
         expect(models.length).to.be.eql(2);
         expect(models[0].email).to.be.eql(options.email);
         expect(models[1].email).to.be.eql(options.email);
+        done();
+      });
+    });
+
+
+    it("should override the values with the options given in all objects and use external $refs", function (done) {
+      let options = {name: "account-name"};
+      factory.createList("account", 2, options, [factory.fixtures("tags")]).then(function (models) {
+        expect(models.length).to.be.eql(2);
+        expect(models[0].name).to.be.eql(options.name);
+        expect(models[1].name).to.be.eql(options.name);
+        expect(models[0].tags.length).to.not.be.eql(0);
         done();
       });
     });

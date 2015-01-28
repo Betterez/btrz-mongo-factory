@@ -26,13 +26,20 @@ function connectionString(dbConfig) {
   return hostPortPairs;
 }
 
-function* modelGen(schema, qty, overrides) {
+function* modelGen(schema, qty, overrides, references) {
   let x  = 0;
- while(x < qty) {
-  x++;
-  let model = schemaFaker(schema);
-  yield _.merge({}, model, overrides);
- }
+  if (references && !Array.isArray(references)) {
+    throw new Error("External references needs to be an array of json-schemas");
+  }
+  try {
+    while(x < qty) {
+      x++;
+      let model = schemaFaker(schema, references);
+      yield _.merge({}, model, overrides);
+    }
+  } catch(e) {
+    throw new Error("There was a problem with the references array, make sure it contains json-schemas");
+  }
 }
 
 function MongoFactory(options) {
@@ -78,16 +85,16 @@ function MongoFactory(options) {
   };
 }
 
-MongoFactory.prototype.create = function (modelName, options) {
+MongoFactory.prototype.create = function (modelName, options, references) {
   let overrides = options || {};
-  let model = modelGen(this.fixtures(modelName), 1, overrides).next().value;
+  let model = modelGen(this.fixtures(modelName), 1, overrides, references).next().value;
   return this.db.collection(modelName).insert(model).then(this.saveIds(modelName));
 };
 
-MongoFactory.prototype.createList = function (modelName, qty, options) {
+MongoFactory.prototype.createList = function (modelName, qty, options, references) {
   let overrides = options || {};
   let models = [];
-  for (let model of modelGen(this.fixtures(modelName), qty, overrides)) {
+  for (let model of modelGen(this.fixtures(modelName), qty, overrides, references)) {
     models.push(model);
   }
   return this.db.collection(modelName).insert(models).then(this.saveIds(modelName));
@@ -101,4 +108,4 @@ MongoFactory.prototype.clearAll = function (cb) {
   }
 };
 
-module.exports = MongoFactory;
+exports.MongoFactory = MongoFactory;

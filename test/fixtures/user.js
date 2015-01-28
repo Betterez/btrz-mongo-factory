@@ -23,13 +23,9 @@ function userSchema () {
   };
 }
 
-function tagsFixture () {
-  return "";
-}
 
 module.exports = function () {
   let fixtures = new Map();
   fixtures.set("user", userSchema());
-  fixtures.set("tags", tagsFixture());
   return fixtures;
 };
