@@ -1,4 +1,4 @@
-# mongo-factory
+# btrz-mongo-factory
 
 Factory to create data in mongodb from a json-schema with the ability to override values.
 

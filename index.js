@@ -37,7 +37,7 @@ function* modelGen(schema, qty, overrides) {
 
 function MongoFactory(options) {
 
-  let fixturesPath = `${__dirname}${options.fixtures}`;
+  let fixturesPath = options.fixtures;
   let fixtureMap = new Map();
   let createdMap = new Map();
   loadFixtures(fixturesPath, fixtureMap);

@@ -9,7 +9,7 @@ describe("MongoFactory", function () {
 
   beforeEach(function () {
     let options = {
-      fixtures: "/test/fixtures",
+      fixtures: `${__dirname}/fixtures`,
       "db": {
           "options": {
             "database": "betterez_core",
