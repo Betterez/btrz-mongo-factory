@@ -28,7 +28,7 @@ function tagsFixture () {
 }
 
 module.exports = function () {
-  var fixtures = new Map();
+  let fixtures = new Map();
   fixtures.set("user", userSchema());
   fixtures.set("tags", tagsFixture());
   return fixtures;

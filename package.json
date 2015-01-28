@@ -1,5 +1,5 @@
 {
-  "name": "mongo-factory",
+  "name": "btrz-mongo-factory",
   "version": "1.0.0",
   "description": "\"A factory to create data in a mongoDb using chance and Json-Schema\"",
   "main": "index.js",
@@ -9,19 +9,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Betterez/mongo-factory.git"
+    "url": "https://github.com/Betterez/btrz-mongo-factory.git"
   },
   "keywords": [
-    "API",
-    "Auth",
-    "X-API-KEY"
+    "test", "seed", "mongo", "factory"
   ],
   "author": "Betterez",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Betterez/mongo-factory/issues"
+    "url": "https://github.com/Betterez/btrz-mongo-factory/issues"
   },
-  "homepage": "https://github.com/Betterez/mongo-factory",
+  "homepage": "https://github.com/Betterez/btrz-mongo-factory",
   "dependencies": {
     "json-schema-faker": "^0.1.5",
     "lodash": "^2.4.1",
