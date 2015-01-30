@@ -9,9 +9,11 @@ node v0.11.x with the --harmony flag
 
 ## Usage
 
+<!---
 Add the module to your `package.json` directly or just run
 
     npm install btrz-mongo-factory --save
+--->
 
 You need to create fixture files. Each file can contain more than one fixture.Fixtures define an object using Json-Schema. 
 
