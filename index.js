@@ -33,9 +33,18 @@ function* modelGen(schema, qty, overrides, references) {
   }
   try {
     while(x < qty) {
-      x++;
       let model = schemaFaker(schema, references);
-      yield _.merge({}, model, overrides);
+      if (_.isArray(overrides)) {
+        let index = x;
+        if (overrides.length-1 < x) {
+          index = x % overrides.length;
+        }
+        yield _.merge({}, model, overrides[index]);
+      }
+      else {
+        yield _.merge({}, model, overrides);
+      }
+      x++;
     }
   } catch(e) {
     throw new Error("There was a problem with the references array, make sure it contains json-schemas");
