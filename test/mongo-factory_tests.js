@@ -131,5 +131,30 @@ describe("MongoFactory", function () {
         done();
       });
     });
+
+    it("should override the values with the options given in the array", function (done) {
+      let options = [{email: "given@example.com"}, {email: "given2@example.com"}, {email: "given3@example.com"}];
+      factory.createList("user", 3, options).then(function (models) {
+        expect(models.length).to.be.eql(3);
+        expect(models[0].email).to.be.eql(options[0].email);
+        expect(models[1].email).to.be.eql(options[1].email);
+        expect(models[2].email).to.be.eql(options[2].email);
+        done();
+      });
+    });
+
+    it("should override the values with the options given in the array with less overrides than fixtures created", function (done) {
+      let options = [{email: "given@example.com"}, {email: "given2@example.com"}, {email: "given3@example.com"}];
+      factory.createList("user", 6, options).then(function (models) {
+        expect(models.length).to.be.eql(6);
+        expect(models[0].email).to.be.eql(options[0].email);
+        expect(models[1].email).to.be.eql(options[1].email);
+        expect(models[2].email).to.be.eql(options[2].email);
+        expect(models[3].email).to.be.eql(options[0].email);
+        expect(models[4].email).to.be.eql(options[1].email);
+        expect(models[5].email).to.be.eql(options[2].email);
+        done();
+      });
+    });
   });
 });
