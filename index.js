@@ -47,7 +47,7 @@ function* modelGen(schema, qty, overrides, references) {
       x++;
     }
   } catch(e) {
-    throw new Error("There was a problem with the references array, make sure it contains json-schemas");
+    throw new Error("There was a problem with the references array, make sure it contains a valid json-schemas: " +  e);
   }
 }
 

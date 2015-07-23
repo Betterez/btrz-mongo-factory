@@ -9,13 +9,12 @@ node v0.11.x with the --harmony flag
 
 ## Usage
 
-<!---
 Add the module to your `package.json` directly or just run
 
     npm install btrz-mongo-factory --save
---->
 
-You need to create fixture files. Each file can contain more than one fixture.Fixtures define an object using Json-Schema. 
+
+You need to create fixture files. Each file can contain more than one fixture.Fixtures define an object using Json-Schema.
 
 We took a dependency on `json-schema-faker` to auto-generate objects based on those schemas and save to the db.
 Given you have a fixture named "user", you can create and save a an object with the user schema into a MongoDb collection by the name of `user` with one call.
@@ -51,7 +50,7 @@ The user will be create with the name: John Smith.
 If your schema have `$ref` you can pass that as the third parameter. (Leave the second parameter empty if you don't want to override anything);
 
     // addressSchema is another schema
-    factory.create("user", {}, addressSchema); 
+    factory.create("user", {}, addressSchema);
 
 You can create multiple users at once using the createList methods.
 
@@ -75,4 +74,3 @@ This method will remove all objects created by the instance.
 
 
 ### Fixtures and schemas
-
