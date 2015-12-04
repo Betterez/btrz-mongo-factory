@@ -80,23 +80,23 @@ describe("MongoFactory", function () {
 
     it("should throw if references is not an array", function () {
       function sut() {
-        factory.create("account", {}, "not-an-array")
+        factory.create("account", {}, "not-an-array");
       }
       expect(sut).to.throw();
     });
 
-    it("should throw is references contains undefined", function () {
+    it("should throw if references contains undefined", function () {
       function sut() {
         factory.create("account", {}, [undefined]);
       }
-      expect(sut).to.throw("There was a problem with the references array, make sure it contains json-schemas");
+      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property '$schema' of undefined");
     });
 
     it("should throw is references contains null", function () {
         function sut() {
           factory.create("account", {}, [null]);
         }
-        expect(sut).to.throw("There was a problem with the references array, make sure it contains json-schemas");
+        expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property '$schema' of null");
     });
   });
 
