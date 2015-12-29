@@ -5,6 +5,7 @@ describe("MongoFactory", function () {
 
   let MongoFactory = require("../").MongoFactory,
     expect = require("chai").expect,
+    sinon = require("sinon"),
     factory;
 
   beforeEach(function () {
@@ -24,8 +25,8 @@ describe("MongoFactory", function () {
     factory = new MongoFactory(options);
   });
 
-  afterEach(function () {
-    factory.clearAll();
+  afterEach(function (done) {
+    factory.clearAll().then(function () { done(); }).catch(done);
   });
 
   describe("fixtures", function () {
@@ -93,10 +94,10 @@ describe("MongoFactory", function () {
     });
 
     it("should throw is references contains null", function () {
-        function sut() {
-          factory.create("account", {}, [null]);
-        }
-        expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property 'id' of null");
+      function sut() {
+        factory.create("account", {}, [null]);
+      }
+      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property 'id' of null");
     });
   });
 
@@ -119,7 +120,6 @@ describe("MongoFactory", function () {
         done();
       });
     });
-
 
     it("should override the values with the options given in all objects and use external $refs", function (done) {
       let options = {name: "account-name"};
@@ -157,4 +157,60 @@ describe("MongoFactory", function () {
       });
     });
   });
+
+  describe("clearAll", function () {
+  
+    it("should return a promise", function (done) {
+      let promise = factory.clearAll();
+      expect(promise).to.be.an.instanceof(Promise);
+      promise.then(function () { done(); });
+    });
+
+    it("should remove all created documents", function (done) {
+      sinon.stub(factory, "created", function () {
+        let map = new Map();
+        map.set("modelOne", ["id1", "id2"]);
+        map.set("modelTwo", ["id3"]);
+        return map;
+      });
+      factory.db = {
+        collection: function (c) { return this[c]; },
+        modelOne: {remove: sinon.stub().returns(Promise.resolve())},
+        modelTwo: {remove: sinon.stub().returns(Promise.resolve())},
+      };
+
+      factory.clearAll().then(function () {
+        factory.created.restore();
+        try {
+          expect(factory.db.modelOne.remove.calledOnce).to.be.true;
+          expect(factory.db.modelOne.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id1", "id2"]);
+          expect(factory.db.modelTwo.remove.calledOnce).to.be.true;
+          expect(factory.db.modelTwo.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id3"]);
+          done();
+        } catch (err) { return done(err); }
+      });
+    });
+  
+    it("should fail if removing any of the created documents fails", function (done) {
+      sinon.stub(factory, "created", function () {
+        let map = new Map();
+        map.set("modelOne", ["id1", "id2"]);
+        map.set("modelTwo", ["id3"]);
+        return map;
+      });
+      let collections = {
+        modelOne: {remove: sinon.stub().returns(Promise.resolve())},
+        modelTwo: {remove: sinon.stub().returns(Promise.reject())},
+      };
+      sinon.stub(factory.db, "collection", function (c) { return collections[c]; });
+
+      factory.clearAll().catch(function () {
+        factory.created.restore();
+        factory.db.collection.restore();
+        done();
+      });
+    });
+
+  });
+
 });

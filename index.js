@@ -109,12 +109,14 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
   return this.db.collection(modelName).insert(models).then(this.saveIds(modelName));
 };
 
-MongoFactory.prototype.clearAll = function (cb) {
+MongoFactory.prototype.clearAll = function () {
   let createdMap = this.created();
+  let removes = [];
   for (let key of createdMap.keys()) {
     let query = {"_id": {"$in": createdMap.get(key)}};
-    this.db.collection(key).remove(query);
+    removes.push(this.db.collection(key).remove(query));
   }
+  return Promise.all(removes);
 };
 
 exports.MongoFactory = MongoFactory;
