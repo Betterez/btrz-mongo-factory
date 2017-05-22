@@ -1,7 +1,6 @@
 "use strict";
-let fs = require("fs"),
-  _ = require("lodash"),
-  pmongo = require("promised-mongo"),
+const fs = require("fs"),
+  MongoClient = require("mongodb").MongoClient,
   schemaFaker = require("json-schema-faker");
 
 function loadFixtures(fixturesPath, fixtureMap) {
@@ -17,8 +16,8 @@ function loadFixtures(fixturesPath, fixtureMap) {
 
 // username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
 function connectionString(dbConfig) {
-  let hostPortPairs = dbConfig.uris.map(function (uri) {
-    return `${uri}/${dbConfig.options.database}`;
+  const hostPortPairs = dbConfig.uris.map(function (uri) {
+    return `mongodb://${uri}/${dbConfig.options.database}`;
   }).join(",");
   if (dbConfig.options.username.length > 0) {
     return `${dbConfig.options.username}:${dbConfig.options.password}@${hostPortPairs}`;
@@ -34,15 +33,15 @@ function* modelGen(schema, qty, overrides, references) {
   try {
     while(x < qty) {
       let model = schemaFaker(schema, references);
-      if (_.isArray(overrides)) {
+      if (Array.isArray(overrides)) {
         let index = x;
         if (overrides.length-1 < x) {
           index = x % overrides.length;
         }
-        yield _.merge({}, model, overrides[index]);
+        yield Object.assign({}, model, overrides[index]);
       }
       else {
-        yield _.merge({}, model, overrides);
+        yield Object.assign({}, model, overrides);
       }
       x++;
     }
@@ -58,7 +57,10 @@ function MongoFactory(options) {
   let createdMap = new Map();
   loadFixtures(fixturesPath, fixtureMap);
 
-  this.db = pmongo(connectionString(options.db));
+  this.connection = MongoClient.connect(connectionString(options.db))
+    .catch((err) => {
+      throw err;
+    });
 
   this.fixtures = function (fixtureName) {
     if (!fixtureName) {
@@ -69,19 +71,14 @@ function MongoFactory(options) {
   };
 
   this.saveIds = function (fixtureName) {
-    return function (models) {
-      let results = models;
-      if (!Array.isArray(models)) {
-        results = [models];
-      }
-      results.forEach(function (model) {
+    return function (ids) {
+      ids.forEach(function (id) {
         if (createdMap.has(fixtureName)) {
-          createdMap.get(fixtureName).push(model._id);
+          createdMap.get(fixtureName).push(id);
         } else {
-          createdMap.set(fixtureName, [model._id]);
+          createdMap.set(fixtureName, [id]);
         }
       });
-      return models;
     };
   };
 
@@ -97,7 +94,14 @@ function MongoFactory(options) {
 MongoFactory.prototype.create = function (modelName, options, references) {
   let overrides = options || {};
   let model = modelGen(this.fixtures(modelName), 1, overrides, references).next().value;
-  return this.db.collection(modelName).insert(model).then(this.saveIds(modelName));
+  return this.connection
+    .then((db) => {
+      return db.collection(modelName).insert(model);
+    })
+    .then((result) => {
+      this.saveIds(modelName)(result.insertedIds);
+      return result.ops[0] || {};
+    });
 };
 
 MongoFactory.prototype.createList = function (modelName, qty, options, references) {
@@ -106,17 +110,26 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
   for (let model of modelGen(this.fixtures(modelName), qty, overrides, references)) {
     models.push(model);
   }
-  return this.db.collection(modelName).insert(models).then(this.saveIds(modelName));
+  return this.connection
+    .then((db) => {
+      return db.collection(modelName).insert(models);
+    })
+    .then((result) => {
+      this.saveIds(modelName)(result.insertedIds);
+      return result.ops;
+    });
 };
 
 MongoFactory.prototype.clearAll = function () {
   let createdMap = this.created();
   let removes = [];
-  for (let key of createdMap.keys()) {
-    let query = {"_id": {"$in": createdMap.get(key)}};
-    removes.push(this.db.collection(key).remove(query));
-  }
-  return Promise.all(removes);
+  return this.connection.then((db) => {
+    for (let key of createdMap.keys()) {
+      let query = {"_id": {"$in": createdMap.get(key)}};
+      removes.push(db.collection(key).remove(query));
+    }
+    return Promise.all(removes);
+  });
 };
 
 exports.MongoFactory = MongoFactory;

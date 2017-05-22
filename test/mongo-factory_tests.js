@@ -55,27 +55,39 @@ describe("MongoFactory", function () {
 
     it("should return an object with random values", function (done) {
       factory.create("user").then(function (model) {
-        expect(model.name).to.not.be.undefined;
-        done();
+        try {
+          expect(model.name).to.not.be.undefined;
+          done();
+        } catch(err) {
+          done(err);
+        }
       });
     });
 
     it("should override the values with the options given", function (done) {
       let options = {name: "Given name", email: "given@example.com"};
       factory.create("user", options).then(function (model) {
-        expect(model.name).to.be.eql(options.name);
-        expect(model.email).to.be.eql(options.email);
-        done();
+        try {
+          expect(model.name).to.be.eql(options.name);
+          expect(model.email).to.be.eql(options.email);
+          done();
+        } catch(err) {
+          done(err);
+        }
       });
     });
 
     it("should create an object with an schema and a $ref", function (done) {
       factory.create("account", {}, [factory.fixtures("tags")]).then(function (model) {
-        expect(model.name).to.not.be.undefined;
-        expect(model.tags.length).to.not.be.eql(0);
-        expect(model.tags[0].id).to.not.be.undefined;
-        expect(model.tags[0].name).to.not.be.undefined;
-        done();
+        try {
+          expect(model.name).to.not.be.undefined;
+          expect(model.tags.length).to.not.be.eql(0);
+          expect(model.tags[0].id).to.not.be.undefined;
+          expect(model.tags[0].name).to.not.be.undefined;
+          done();
+        } catch(err) {
+          done(err);
+        }
       });
     });
 
@@ -160,53 +172,70 @@ describe("MongoFactory", function () {
 
   describe("clearAll", function () {
   
-    it("should return a promise", function (done) {
+    it("should return a promise", function () {
       let promise = factory.clearAll();
       expect(promise).to.be.an.instanceof(Promise);
-      promise.then(function () { done(); });
+      return promise;
     });
 
     it("should remove all created documents", function (done) {
-      sinon.stub(factory, "created", function () {
+      sinon.stub(factory, "created").callsFake(() => {
         let map = new Map();
         map.set("modelOne", ["id1", "id2"]);
         map.set("modelTwo", ["id3"]);
         return map;
       });
-      factory.db = {
-        collection: function (c) { return this[c]; },
+
+      const dbOperations = {
+        remove: sinon.stub().returns(Promise.resolve())
+      };
+      const collections = {
         modelOne: {remove: sinon.stub().returns(Promise.resolve())},
         modelTwo: {remove: sinon.stub().returns(Promise.resolve())},
       };
+      const dbModule = {
+        collection: (model) => {
+          return collections[model];
+        }
+      };
+      factory.connection = Promise.resolve(dbModule);
 
-      factory.clearAll().then(function () {
+      factory.clearAll().then(() => {
         factory.created.restore();
         try {
-          expect(factory.db.modelOne.remove.calledOnce).to.be.true;
-          expect(factory.db.modelOne.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id1", "id2"]);
-          expect(factory.db.modelTwo.remove.calledOnce).to.be.true;
-          expect(factory.db.modelTwo.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id3"]);
+          expect(collections.modelOne.remove.calledOnce).to.be.true;
+          expect(collections.modelOne.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id1", "id2"]);
+          expect(collections.modelTwo.remove.calledOnce).to.be.true;
+          expect(collections.modelTwo.remove.firstCall.args[0]["_id"]["$in"]).to.deep.equal(["id3"]);
           done();
         } catch (err) { return done(err); }
       });
     });
   
     it("should fail if removing any of the created documents fails", function (done) {
-      sinon.stub(factory, "created", function () {
+      sinon.stub(factory, "created").callsFake(() => {
         let map = new Map();
         map.set("modelOne", ["id1", "id2"]);
         map.set("modelTwo", ["id3"]);
         return map;
       });
-      let collections = {
+
+      const dbOperations = {
+        remove: sinon.stub().returns(Promise.resolve())
+      };
+      const collections = {
         modelOne: {remove: sinon.stub().returns(Promise.resolve())},
         modelTwo: {remove: sinon.stub().returns(Promise.reject())},
       };
-      sinon.stub(factory.db, "collection", function (c) { return collections[c]; });
+      const dbModule = {
+        collection: (model) => {
+          return collections[model];
+        }
+      };
+      factory.connection = Promise.resolve(dbModule);
 
-      factory.clearAll().catch(function () {
+      factory.clearAll().catch(() => {
         factory.created.restore();
-        factory.db.collection.restore();
         done();
       });
     });
