@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/Betterez/btrz-mongo-factory",
   "dependencies": {
-    "json-schema-faker": "^0.4.1",
+    "json-schema-faker": "0.4.3",
     "mongodb": "^2.2.27",
     "publish": "^0.5.0"
   },
