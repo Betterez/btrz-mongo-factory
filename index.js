@@ -3,15 +3,29 @@ const fs = require("fs"),
   MongoClient = require("mongodb").MongoClient,
   schemaFaker = require("json-schema-faker");
 
-function loadFixtures(fixturesPath, fixtureMap) {
-  fs
-    .readdirSync(fixturesPath)
-    .forEach(function (fileName) {
-      let fixture = require(`${fixturesPath}/${fileName}`)();
-      for (let key of fixture.keys()) {
-        fixtureMap.set(key, fixture.get(key));
+function loadFixtures({fixtures, loadFromModels = false}, fixtureMap) {
+  if (loadFromModels) {
+    const models = require(fixtures);
+    // get the models from index file
+    for (const model of Object.values(models)) {
+      // if the model has the fixturesSchema function loop through its entries
+      if (typeof model.fixturesSchema === "function") {
+        const fixture = model.fixturesSchema();
+        for (const [key, value] of fixture.entries()) {
+          fixtureMap.set(key, value);
+        }
       }
-    });
+    }
+  } else {
+    fs
+    .readdirSync(fixtures)
+    .forEach(function (fileName) {
+      let fixture = require(`${fixtures}/${fileName}`)();
+      for (const [key, value] of fixture.entries()) {
+          fixtureMap.set(key, value);
+        }
+      });
+  }
 }
 
 // username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
@@ -52,10 +66,10 @@ function* modelGen(schema, qty, overrides, references) {
 
 function MongoFactory(options) {
 
-  let fixturesPath = options.fixtures;
+  // let fixturesPath = options.fixtures;
   let fixtureMap = new Map();
   let createdMap = new Map();
-  loadFixtures(fixturesPath, fixtureMap);
+  loadFixtures(options, fixtureMap);
 
   this.connection = MongoClient.connect(connectionString(options.db))
     .catch((err) => {
