@@ -1,7 +1,13 @@
 "use strict";
-const fs = require("fs"),
-  MongoClient = require("mongodb").MongoClient,
-  schemaFaker = require("json-schema-faker");
+const fs = require("fs");
+const {
+  MongoClient
+} = require("mongodb");
+const schemaFaker = require("json-schema-faker");
+
+const {
+  createFixture
+} = require("./createFixture");
 
 function loadFixtures({fixtures, loadFromModels = false}, fixtureMap) {
   if (loadFromModels) {
@@ -146,4 +152,7 @@ MongoFactory.prototype.clearAll = function () {
   });
 };
 
-exports.MongoFactory = MongoFactory;
+module.exports = {
+  createFixture,
+  MongoFactory
+};
