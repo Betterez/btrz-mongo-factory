@@ -1,5 +1,6 @@
 "use strict";
 const fs = require("fs");
+let __connection = null;
 const {
   MongoClient
 } = require("mongodb");
@@ -77,10 +78,14 @@ function MongoFactory(options) {
   let createdMap = new Map();
   loadFixtures(options, fixtureMap);
 
-  this.connection = MongoClient.connect(connectionString(options.db))
-    .catch((err) => {
-      throw err;
-    });
+  if (!__connection) {
+    __connection = MongoClient.connect(connectionString(options.db))
+      .catch((err) => {
+        throw err;
+      });
+  }
+
+  this.connection = __connection;
 
   this.fixtures = function (fixtureName) {
     if (!fixtureName) {

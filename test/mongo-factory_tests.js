@@ -25,6 +25,25 @@ describe("MongoFactory", function () {
     factory = new MongoFactory(options);
   });
 
+  it("connection pooling", () => {
+    let options = {
+      fixtures: `${__dirname}/fixtures`,
+      "db": {
+        "options": {
+          "database": "btrzMongoFactory",
+          "username": "",
+          "password": ""
+        },
+        "uris": [
+          "127.0.0.1:27017"
+        ]
+      }
+    };
+    for (let i = 0; i < 100; i++) {
+      new MongoFactory(options);
+    }
+  });
+
   afterEach(function (done) {
     factory.clearAll().then(function () { done(); }).catch(done);
   });
