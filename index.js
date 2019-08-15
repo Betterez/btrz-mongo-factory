@@ -80,8 +80,9 @@ function MongoFactory(options) {
 
   if (!__connection) {
     __connection = MongoClient.connect(connectionString(options.db))
-      .catch((err) => {
-        throw err;
+      .then((client) => {
+        // Use the database specified in the connection string
+        return client.db();
       });
   }
 
@@ -124,7 +125,7 @@ MongoFactory.prototype.create = function (modelName, options, references) {
       return db.collection(modelName).insert(model);
     })
     .then((result) => {
-      this.saveIds(modelName)(result.insertedIds);
+      this.saveIds(modelName)(Object.values(result.insertedIds));
       return result.ops[0] || {};
     });
 };
@@ -140,7 +141,7 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
       return db.collection(modelName).insert(models);
     })
     .then((result) => {
-      this.saveIds(modelName)(result.insertedIds);
+      this.saveIds(modelName)(Object.values(result.insertedIds));
       return result.ops;
     });
 };
