@@ -1,9 +1,7 @@
 "use strict";
 const fs = require("fs");
 let __connection = null;
-const {
-  MongoClient
-} = require("mongodb");
+const {SimpleDao} = require("btrz-simple-dao");
 const schemaFaker = require("json-schema-faker");
 
 const {
@@ -35,16 +33,6 @@ function loadFixtures({fixtures, loadFromModels = false}, fixtureMap) {
   }
 }
 
-// username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
-function connectionString(dbConfig) {
-  const hostPortPairs = dbConfig.uris.map(function (uri) {
-    return `mongodb://${uri}/${dbConfig.options.database}`;
-  }).join(",");
-  if (dbConfig.options.username.length > 0) {
-    return `${dbConfig.options.username}:${dbConfig.options.password}@${hostPortPairs}`;
-  }
-  return hostPortPairs;
-}
 
 function* modelGen(schema, qty, overrides, references) {
   let x  = 0;
@@ -71,19 +59,14 @@ function* modelGen(schema, qty, overrides, references) {
   }
 }
 
-function MongoFactory(options) {
-
-  // let fixturesPath = options.fixtures;
+function MongoFactory(config) {
   let fixtureMap = new Map();
   let createdMap = new Map();
-  loadFixtures(options, fixtureMap);
+  loadFixtures(config, fixtureMap);
 
   if (!__connection) {
-    __connection = MongoClient.connect(connectionString(options.db))
-      .then((client) => {
-        // Use the database specified in the connection string
-        return client.db();
-      });
+    const simpleDao = new SimpleDao(config);
+    __connection = simpleDao.connect();
   }
 
   this.connection = __connection;
