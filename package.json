@@ -1,6 +1,6 @@
 {
   "name": "btrz-mongo-factory",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "\"A factory to create data in a mongoDb using chance and Json-Schema\"",
   "main": "index.js",
   "scripts": {
