@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --ui bdd -t 5000 --exit",
-    "test-w": "node_modules/mocha/bin/mocha -w"
+    "tdd": "node_modules/mocha/bin/mocha -w",
+    "preversion": "npm test",
+    "postversion": "git push origin master && git push --tags"
   },
   "repository": {
     "type": "git",
@@ -24,14 +26,13 @@
   },
   "homepage": "https://github.com/Betterez/btrz-mongo-factory",
   "dependencies": {
-    "deep-extend": "^0.6.0",
-    "btrz-simple-dao": "^4.1.0",
-    "json-schema-faker": "0.4.3",
-    "lodash.get": "^4.4.2"
+    "deep-extend": "0.6.0",
+    "btrz-simple-dao": "4.2.1",
+    "json-schema-faker": "0.5.0-rcv.40"
   },
   "devDependencies": {
-    "chai": "4.1.2",
-    "mocha": "5.0.2",
-    "sinon": "2.4.1"
+    "chai": "4.3.4",
+    "mocha": "9.1.2",
+    "sinon": "11.1.2"
   }
 }

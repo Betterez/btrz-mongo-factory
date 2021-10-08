@@ -1,6 +1,3 @@
-const get = require("lodash.get");
-const assert = require("assert");
-
 /**
  * Creates a single test fixture for the specified modelName, with the specified data.
  * @param modelName The name of the data model that has been previously registered with the fixturesFactory
@@ -12,7 +9,9 @@ const assert = require("assert");
 function createFixture(modelName, refNames, SimpleDao) {
   return (fixturesFactory, data) => {
     if (data._id) {
-      assert(get(data, "_id.constructor.name") === "ObjectID", "createFixture: _id must be an ObjectID");
+      if (!data._id.constructor || data._id.constructor.name !== "ObjectID") {
+        throw new Error("createFixture: _id must be an ObjectID");
+      } 
     }
   
     const _id = data._id || SimpleDao.objectId();

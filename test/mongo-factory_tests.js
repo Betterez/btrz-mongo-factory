@@ -121,14 +121,14 @@ describe("MongoFactory", function () {
       function sut() {
         factory.create("account", {}, [undefined]);
       }
-      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property 'id' of undefined");
+      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property '$id' of undefined");
     });
 
     it("should throw is references contains null", function () {
       function sut() {
         factory.create("account", {}, [null]);
       }
-      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property 'id' of null");
+      expect(sut).to.throw("There was a problem with the references array, make sure it contains a valid json-schemas: TypeError: Cannot read property '$id' of null");
     });
   });
 
