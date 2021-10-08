@@ -41,7 +41,7 @@ function* modelGen(schema, qty, overrides, references) {
   }
   try {
     while(x < qty) {
-      let model = schemaFaker(schema, references);
+      let model = schemaFaker.generate(schema, references);
       if (Array.isArray(overrides)) {
         let index = x;
         if (overrides.length-1 < x) {
@@ -102,7 +102,8 @@ function MongoFactory(config) {
 
 MongoFactory.prototype.create = function (modelName, options, references) {
   let overrides = options || {};
-  let model = modelGen(this.fixtures(modelName), 1, overrides, references).next().value;
+  const schema = this.fixtures(modelName) || references[0];
+  let model = modelGen(schema, 1, overrides, references).next().value;
   return this.connection
     .then((db) => {
       return db.collection(modelName).insert(model);
@@ -116,7 +117,8 @@ MongoFactory.prototype.create = function (modelName, options, references) {
 MongoFactory.prototype.createList = function (modelName, qty, options, references) {
   let overrides = options || {};
   let models = [];
-  for (let model of modelGen(this.fixtures(modelName), qty, overrides, references)) {
+  const schema = this.fixtures(modelName) || references[0];
+  for (let model of modelGen(schema, qty, overrides, references)) {
     models.push(model);
   }
   return this.connection

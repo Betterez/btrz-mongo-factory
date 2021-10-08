@@ -110,6 +110,20 @@ describe("MongoFactory", function () {
       });
     });
 
+    it("should create an object with an schema and a $ref", function (done) {
+      factory.create("account_two", {}, [factory.fixtures("account"), factory.fixtures("tags")]).then(function (model) {
+        try {
+          expect(model.name).to.not.be.undefined;
+          expect(model.tags.length).to.not.be.eql(0);
+          expect(model.tags[0].id).to.not.be.undefined;
+          expect(model.tags[0].name).to.not.be.undefined;
+          done();
+        } catch(err) {
+          done(err);
+        }
+      });
+    });
+
     it("should throw if references is not an array", function () {
       function sut() {
         factory.create("account", {}, "not-an-array");
