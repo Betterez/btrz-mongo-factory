@@ -41,7 +41,12 @@ function* modelGen(schema, qty, overrides, references) {
   }
   try {
     while(x < qty) {
-      let model = schemaFaker.generate(schema, references);
+      let model = {};
+      try {
+        model = schemaFaker.generate(schema, references);
+      } catch (e) {
+        model = {};
+      }
       if (Array.isArray(overrides)) {
         let index = x;
         if (overrides.length-1 < x) {
@@ -55,6 +60,7 @@ function* modelGen(schema, qty, overrides, references) {
       x++;
     }
   } catch(e) {
+    console.log(e);
     throw new Error("There was a problem with the references array, make sure it contains a valid json-schemas: " +  e);
   }
 }
