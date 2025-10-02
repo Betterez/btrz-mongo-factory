@@ -112,10 +112,10 @@ MongoFactory.prototype.create = function (modelName, options, references) {
   let model = modelGen(schema, 1, overrides, references).next().value;
   return this.connection
     .then((db) => {
-      return db.collection(modelName).insert(model);
+      return db.collection(modelName).insertOne(model);
     })
     .then((result) => {
-      this.saveIds(modelName)(Object.values(result.insertedIds));
+      this.saveIds(modelName)([result.insertedId]);
       return result.ops[0] || {};
     });
 };
@@ -129,7 +129,7 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
   }
   return this.connection
     .then((db) => {
-      return db.collection(modelName).insert(models);
+      return db.collection(modelName).insertMany(models);
     })
     .then((result) => {
       this.saveIds(modelName)(Object.values(result.insertedIds));
@@ -139,13 +139,13 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
 
 MongoFactory.prototype.clearAll = function () {
   let createdMap = this.created();
-  let removes = [];
+  let deletions = [];
   return this.connection.then((db) => {
     for (let key of createdMap.keys()) {
       let query = {"_id": {"$in": createdMap.get(key)}};
-      removes.push(db.collection(key).remove(query));
+      deletions.push(db.collection(key).deleteMany(query));
     }
-    return Promise.all(removes);
+    return Promise.all(deletions);
   });
 };
 
