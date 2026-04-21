@@ -1,12 +1,11 @@
-/*jshint expr: true*/
-"use strict";
+const {describe, it, beforeEach, afterEach} = require("node:test");
+const assert = require("node:assert/strict");
+const sinon = require("sinon");
+const {MongoFactory} = require("../");
 
 describe("MongoFactory", function () {
 
-  let MongoFactory = require("../").MongoFactory,
-    expect = require("chai").expect,
-    sinon = require("sinon"),
-    factory;
+  let factory;
 
   beforeEach(function () {
     let options = {
@@ -44,20 +43,20 @@ describe("MongoFactory", function () {
     }
   });
 
-  afterEach(function (done) {
-    factory.clearAll().then(function () { done(); }).catch(done);
+  afterEach(async function () {
+    await factory.clearAll();
   });
 
   describe("fixtures", function () {
 
     it("should load all fixtures from the fixtures folder in options", function () {
-      expect(factory.fixtures()).to.not.be.null;
-      expect(factory.fixtures().size).to.be.eql(3);
+      assert.notEqual(factory.fixtures(), null);
+      assert.equal(factory.fixtures().size, 3);
     });
 
     it("should return a given fixture by name", function () {
-      expect(factory.fixtures("account")).to.not.be.null;
-      expect(factory.fixtures("account").size).to.be.undefined;
+      assert.notEqual(factory.fixtures("account"), null);
+      assert.equal(factory.fixtures("account").size, undefined);
     });
 
     it("should throw if given invalid fixtures", function () {
@@ -65,7 +64,7 @@ describe("MongoFactory", function () {
         let f = new MongoFactory({fixtures: "/test/invalid-fixtures"});
         return f;
       }
-      expect(sut).to.throw();
+      assert.throws(sut);
     });
 
   });
@@ -74,37 +73,37 @@ describe("MongoFactory", function () {
 
     it("should return an object with random values", async () => {
       const model = await factory.create("user");
-      expect(model.name).to.not.be.undefined;
+      assert.notEqual(model.name, undefined);
     });
 
     it("should override the values with the options given", async () => {
       let options = {name: "Given name", email: "given@example.com"};
       const model = await factory.create("user", options);
-      expect(model.name).to.be.eql(options.name);
-      expect(model.email).to.be.eql(options.email);
+      assert.equal(model.name, options.name);
+      assert.equal(model.email, options.email);
     });
 
     it("should create an object with an schema and a $ref", async () => {
       const model = await factory.create("account", {}, [factory.fixtures("tags")]);
-      expect(model.name).to.not.be.undefined;
-      expect(model.tags.length).to.not.be.eql(0);
-      expect(model.tags[0].id).to.not.be.undefined;
-      expect(model.tags[0].name).to.not.be.undefined;
+      assert.notEqual(model.name, undefined);
+      assert.notEqual(model.tags.length, 0);
+      assert.notEqual(model.tags[0].id, undefined);
+      assert.notEqual(model.tags[0].name, undefined);
     });
 
     it("should create an object with an schema and a $ref", async () => {
       const model = await factory.create("account_two", {}, [factory.fixtures("account"), factory.fixtures("tags")]);
-      expect(model.name).to.not.be.undefined;
-      expect(model.tags.length).to.not.be.eql(0);
-      expect(model.tags[0].id).to.not.be.undefined;
-      expect(model.tags[0].name).to.not.be.undefined;
+      assert.notEqual(model.name, undefined);
+      assert.notEqual(model.tags.length, 0);
+      assert.notEqual(model.tags[0].id, undefined);
+      assert.notEqual(model.tags[0].name, undefined);
     });
 
     it("should throw if references is not an array", async () => {
       function sut() {
         factory.create("account", {}, "not-an-array");
       }
-      expect(sut).to.throw();
+      assert.throws(sut);
     });
   });
 
@@ -112,46 +111,46 @@ describe("MongoFactory", function () {
 
     it("should return a list of objects with random values of size X", async () => {
       const models = await factory.createList("user", 2);
-      expect(models.length).to.be.eql(2);
-      expect(models[0].name).to.not.be.undefined;
+      assert.equal(models.length, 2);
+      assert.notEqual(models[0].name, undefined);
     });
 
     it("should override the values with the options given in all objects", async () => {
       let options = {email: "given@example.com"};
       const models = await factory.createList("user", 2, options);
-      expect(models.length).to.be.eql(2);
-      expect(models[0].email).to.be.eql(options.email);
-      expect(models[1].email).to.be.eql(options.email);
+      assert.equal(models.length, 2);
+      assert.equal(models[0].email, options.email);
+      assert.equal(models[1].email, options.email);
     });
 
     it("should override the values with the options given in all objects and use external $refs", async () => {
       let options = {name: "account-name"};
       const models = await factory.createList("account", 2, options, [factory.fixtures("tags")]);
-      expect(models.length).to.be.eql(2);
-      expect(models[0].name).to.be.eql(options.name);
-      expect(models[1].name).to.be.eql(options.name);
-      expect(models[0].tags.length).to.not.be.eql(0);
+      assert.equal(models.length, 2);
+      assert.equal(models[0].name, options.name);
+      assert.equal(models[1].name, options.name);
+      assert.notEqual(models[0].tags.length, 0);
     });
 
     it("should override the values with the options given in the array", async () => {
       let options = [{email: "given@example.com"}, {email: "given2@example.com"}, {email: "given3@example.com"}];
       const models = await factory.createList("user", 3, options);
-      expect(models.length).to.be.eql(3);
-      expect(models[0].email).to.be.eql(options[0].email);
-      expect(models[1].email).to.be.eql(options[1].email);
-      expect(models[2].email).to.be.eql(options[2].email);
+      assert.equal(models.length, 3);
+      assert.equal(models[0].email, options[0].email);
+      assert.equal(models[1].email, options[1].email);
+      assert.equal(models[2].email, options[2].email);
     });
 
     it("should override the values with the options given in the array with less overrides than fixtures created", async () => {
       let options = [{email: "given@example.com"}, {email: "given2@example.com"}, {email: "given3@example.com"}];
       const models = await factory.createList("user", 6, options);
-      expect(models.length).to.be.eql(6);
-      expect(models[0].email).to.be.eql(options[0].email);
-      expect(models[1].email).to.be.eql(options[1].email);
-      expect(models[2].email).to.be.eql(options[2].email);
-      expect(models[3].email).to.be.eql(options[0].email);
-      expect(models[4].email).to.be.eql(options[1].email);
-      expect(models[5].email).to.be.eql(options[2].email);
+      assert.equal(models.length, 6);
+      assert.equal(models[0].email, options[0].email);
+      assert.equal(models[1].email, options[1].email);
+      assert.equal(models[2].email, options[2].email);
+      assert.equal(models[3].email, options[0].email);
+      assert.equal(models[4].email, options[1].email);
+      assert.equal(models[5].email, options[2].email);
     });
   });
 
@@ -159,7 +158,7 @@ describe("MongoFactory", function () {
 
     it("should return a promise", async () => {
       let promise = factory.clearAll();
-      expect(promise).to.be.an.instanceof(Promise);
+      assert.ok(promise instanceof Promise);
       return promise;
     });
 
@@ -185,10 +184,10 @@ describe("MongoFactory", function () {
       await factory.clearAll();
       factory.created.restore();
 
-      expect(collections.modelOne.deleteMany.calledOnce).to.be.true;
-      expect(collections.modelOne.deleteMany.firstCall.args[0]._id.$in).to.deep.equal(["id1", "id2"]);
-      expect(collections.modelTwo.deleteMany.calledOnce).to.be.true;
-      expect(collections.modelTwo.deleteMany.firstCall.args[0]._id.$in).to.deep.equal(["id3"]);
+      assert.equal(collections.modelOne.deleteMany.calledOnce, true);
+      assert.deepEqual(collections.modelOne.deleteMany.firstCall.args[0]._id.$in, ["id1", "id2"]);
+      assert.equal(collections.modelTwo.deleteMany.calledOnce, true);
+      assert.deepEqual(collections.modelTwo.deleteMany.firstCall.args[0]._id.$in, ["id3"]);
     });
 
     it("should fail if removing any of the created documents fails", async () => {
@@ -212,10 +211,10 @@ describe("MongoFactory", function () {
 
       try {
         await factory.clearAll();
-        expect.fail("Expected function to reject");
+        assert.fail("Expected function to reject");
       } catch (error) {
         factory.created.restore();
-        expect(error.message).to.eql("Some error");
+        assert.equal(error.message, "Some error");
       }
     });
   });

@@ -4,8 +4,8 @@
   "description": "\"A factory to create data in a mongoDb using chance and Json-Schema\"",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha --ui bdd -t 5000 --exit",
-    "tdd": "node_modules/mocha/bin/mocha -w",
+    "test": "node --test --test-force-exit test/*.js",
+    "tdd": "node --watch --test test/*.js",
     "preversion": "npm test",
     "postversion": "git push origin master && git push --tags"
   },
@@ -27,12 +27,10 @@
   "homepage": "https://github.com/Betterez/btrz-mongo-factory",
   "dependencies": {
     "deep-extend": "0.6.0",
-    "btrz-simple-dao": "4.3.0",
+    "btrz-simple-dao": "4.6.0",
     "json-schema-faker": "0.5.0-rcv.42"
   },
   "devDependencies": {
-    "chai": "4.3.6",
-    "mocha": "9.2.2",
-    "sinon": "13.0.2"
+    "sinon": "21.1.2"
   }
 }
