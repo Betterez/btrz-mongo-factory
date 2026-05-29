@@ -105,6 +105,12 @@ describe("MongoFactory", function () {
       }
       assert.throws(sut);
     });
+
+    it("should not throw when schema and reference are undefined", async () => {
+      const options = {name: "fallback-name"};
+      const model = await factory.create("missing-model", options, [undefined]);
+      assert.equal(model.name, options.name);
+    });
   });
 
   describe("createList", function () {

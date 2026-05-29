@@ -28,10 +28,17 @@ async function getSchemaFakerGenerate() {
 }
 
 function cloneDeep(value) {
+  if (value === undefined || value === null) {
+    return value;
+  }
   return JSON.parse(JSON.stringify(value));
 }
 
 function rewriteLegacyRefs(schema, references) {
+  if (!schema || typeof schema !== "object") {
+    return schema;
+  }
+
   if (!Array.isArray(references) || references.length === 0) {
     return schema;
   }
@@ -179,7 +186,7 @@ MongoFactory.prototype.create = function (modelName, options, references) {
     throw new Error("External references needs to be an array of json-schemas");
   }
   let overrides = options || {};
-  const schema = this.fixtures(modelName) || references[0];
+  const schema = this.fixtures(modelName) || (references && references[0]);
   return modelGen(schema, 1, overrides, references).next()
     .then((generated) => generated.value)
     .then((model) => {
@@ -199,7 +206,7 @@ MongoFactory.prototype.createList = function (modelName, qty, options, reference
     throw new Error("External references needs to be an array of json-schemas");
   }
   let overrides = options || {};
-  const schema = this.fixtures(modelName) || references[0];
+  const schema = this.fixtures(modelName) || (references && references[0]);
   return (async () => {
     let models = [];
     for await (let model of modelGen(schema, qty, overrides, references)) {
