@@ -115,10 +115,11 @@ async function* modelGen(schema, qty, overrides, references) {
   try {
     const generate = await getSchemaFakerGenerate();
     const schemaForGeneration = rewriteLegacyRefs(schema, references);
+    const baseSeed = Date.now() + Math.floor(Math.random() * 1000000);
     while(x < qty) {
       let model = {};
       try {
-        model = await generate(schemaForGeneration);
+        model = await generate(schemaForGeneration, {seed: baseSeed + x});
       } catch (e) {
         model = {};
       }

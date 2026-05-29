@@ -129,6 +129,12 @@ describe("MongoFactory", function () {
       assert.equal(models[1].email, options.email);
     });
 
+    it("should generate different random values for each created model", async () => {
+      const models = await factory.createList("user", 2);
+      assert.equal(models.length, 2);
+      assert.notEqual(models[0].email, models[1].email);
+    });
+
     it("should override the values with the options given in all objects and use external $refs", async () => {
       let options = {name: "account-name"};
       const models = await factory.createList("account", 2, options, [factory.fixtures("tags")]);
