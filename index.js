@@ -2,11 +2,77 @@
 const fs = require("fs");
 let __connection = null;
 const {SimpleDao} = require("btrz-simple-dao");
-const schemaFaker = require("json-schema-faker");
+let schemaFakerGenerate = null;
 
 const {
   createFixture
 } = require("./createFixture");
+
+async function getSchemaFakerGenerate() {
+  if (schemaFakerGenerate) {
+    return schemaFakerGenerate;
+  }
+
+  const schemaFakerModule = await import("json-schema-faker");
+  const generate =
+    schemaFakerModule.generate ||
+    (schemaFakerModule.default && schemaFakerModule.default.generate) ||
+    schemaFakerModule.default;
+
+  if (typeof generate !== "function") {
+    throw new Error("json-schema-faker generate function was not found");
+  }
+
+  schemaFakerGenerate = generate;
+  return schemaFakerGenerate;
+}
+
+function cloneDeep(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function rewriteLegacyRefs(schema, references) {
+  if (!Array.isArray(references) || references.length === 0) {
+    return schema;
+  }
+
+  const schemaWithRefs = cloneDeep(schema);
+  const defs = {};
+
+  for (const refSchema of references) {
+    if (refSchema && typeof refSchema === "object" && typeof refSchema.id === "string" && refSchema.id.length > 0) {
+      defs[refSchema.id] = cloneDeep(refSchema);
+    }
+  }
+
+  if (Object.keys(defs).length === 0) {
+    return schemaWithRefs;
+  }
+
+  schemaWithRefs.$defs = Object.assign({}, schemaWithRefs.$defs || {}, defs);
+
+  function rewriteNode(node) {
+    if (!node || typeof node !== "object") {
+      return;
+    }
+
+    if (typeof node.$ref === "string" && !node.$ref.startsWith("#/") && defs[node.$ref]) {
+      node.$ref = `#/$defs/${node.$ref}`;
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(rewriteNode);
+      return;
+    }
+
+    for (const value of Object.values(node)) {
+      rewriteNode(value);
+    }
+  }
+
+  rewriteNode(schemaWithRefs);
+  return schemaWithRefs;
+}
 
 function loadFixtures({fixtures, loadFromModels = false}, fixtureMap) {
   if (loadFromModels) {
@@ -34,16 +100,18 @@ function loadFixtures({fixtures, loadFromModels = false}, fixtureMap) {
 }
 
 
-function* modelGen(schema, qty, overrides, references) {
+async function* modelGen(schema, qty, overrides, references) {
   let x  = 0;
   if (references && !Array.isArray(references)) {
     throw new Error("External references needs to be an array of json-schemas");
   }
   try {
+    const generate = await getSchemaFakerGenerate();
+    const schemaForGeneration = rewriteLegacyRefs(schema, references);
     while(x < qty) {
       let model = {};
       try {
-        model = schemaFaker.generate(schema, references);
+        model = await generate(schemaForGeneration);
       } catch (e) {
         model = {};
       }
@@ -107,33 +175,47 @@ function MongoFactory(config) {
 }
 
 MongoFactory.prototype.create = function (modelName, options, references) {
+  if (references && !Array.isArray(references)) {
+    throw new Error("External references needs to be an array of json-schemas");
+  }
   let overrides = options || {};
   const schema = this.fixtures(modelName) || references[0];
-  let model = modelGen(schema, 1, overrides, references).next().value;
-  return this.connection
-    .then((db) => {
-      return db.collection(modelName).insertOne(model);
-    })
-    .then((result) => {
-      this.saveIds(modelName)([result.insertedId]);
-      return result.ops[0] || {};
+  return modelGen(schema, 1, overrides, references).next()
+    .then((generated) => generated.value)
+    .then((model) => {
+      return this.connection
+      .then((db) => {
+        return db.collection(modelName).insertOne(model);
+      })
+      .then((result) => {
+        this.saveIds(modelName)([result.insertedId]);
+        return result.ops[0] || {};
+      });
     });
 };
 
 MongoFactory.prototype.createList = function (modelName, qty, options, references) {
-  let overrides = options || {};
-  let models = [];
-  const schema = this.fixtures(modelName) || references[0];
-  for (let model of modelGen(schema, qty, overrides, references)) {
-    models.push(model);
+  if (references && !Array.isArray(references)) {
+    throw new Error("External references needs to be an array of json-schemas");
   }
-  return this.connection
-    .then((db) => {
-      return db.collection(modelName).insertMany(models);
-    })
-    .then((result) => {
-      this.saveIds(modelName)(Object.values(result.insertedIds));
-      return result.ops;
+  let overrides = options || {};
+  const schema = this.fixtures(modelName) || references[0];
+  return (async () => {
+    let models = [];
+    for await (let model of modelGen(schema, qty, overrides, references)) {
+      models.push(model);
+    }
+    return models;
+  })()
+    .then((models) => {
+      return this.connection
+      .then((db) => {
+        return db.collection(modelName).insertMany(models);
+      })
+      .then((result) => {
+        this.saveIds(modelName)(Object.values(result.insertedIds));
+        return result.ops;
+      });
     });
 };
 
