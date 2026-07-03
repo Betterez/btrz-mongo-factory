@@ -1,6 +1,5 @@
-const {describe, it, beforeEach, afterEach} = require("node:test");
+const {describe, it, beforeEach, afterEach, mock} = require("node:test");
 const assert = require("node:assert/strict");
-const sinon = require("sinon");
 const {MongoFactory} = require("../");
 
 describe("MongoFactory", function () {
@@ -175,7 +174,7 @@ describe("MongoFactory", function () {
     });
 
     it("should remove all created documents", async () => {
-      sinon.stub(factory, "created").callsFake(() => {
+      const createdStub = mock.method(factory, "created", () => {
         let map = new Map();
         map.set("modelOne", ["id1", "id2"]);
         map.set("modelTwo", ["id3"]);
@@ -183,8 +182,8 @@ describe("MongoFactory", function () {
       });
 
       const collections = {
-        modelOne: {deleteMany: sinon.stub().resolves()},
-        modelTwo: {deleteMany: sinon.stub().resolves()},
+        modelOne: {deleteMany: mock.fn(async () => {})},
+        modelTwo: {deleteMany: mock.fn(async () => {})},
       };
       const dbModule = {
         collection: (model) => {
@@ -194,16 +193,16 @@ describe("MongoFactory", function () {
       factory.connection = Promise.resolve(dbModule);
 
       await factory.clearAll();
-      factory.created.restore();
+      createdStub.mock.restore();
 
-      assert.equal(collections.modelOne.deleteMany.calledOnce, true);
-      assert.deepEqual(collections.modelOne.deleteMany.firstCall.args[0]._id.$in, ["id1", "id2"]);
-      assert.equal(collections.modelTwo.deleteMany.calledOnce, true);
-      assert.deepEqual(collections.modelTwo.deleteMany.firstCall.args[0]._id.$in, ["id3"]);
+      assert.equal(collections.modelOne.deleteMany.mock.callCount(), 1);
+      assert.deepEqual(collections.modelOne.deleteMany.mock.calls[0].arguments[0]._id.$in, ["id1", "id2"]);
+      assert.equal(collections.modelTwo.deleteMany.mock.callCount(), 1);
+      assert.deepEqual(collections.modelTwo.deleteMany.mock.calls[0].arguments[0]._id.$in, ["id3"]);
     });
 
     it("should fail if removing any of the created documents fails", async () => {
-      sinon.stub(factory, "created").callsFake(() => {
+      const createdStub = mock.method(factory, "created", () => {
         let map = new Map();
         map.set("modelOne", ["id1", "id2"]);
         map.set("modelTwo", ["id3"]);
@@ -211,8 +210,8 @@ describe("MongoFactory", function () {
       });
 
       const collections = {
-        modelOne: {deleteMany: sinon.stub().resolves()},
-        modelTwo: {deleteMany: sinon.stub().rejects(new Error("Some error"))},
+        modelOne: {deleteMany: mock.fn(async () => {})},
+        modelTwo: {deleteMany: mock.fn(async () => { throw new Error("Some error"); })},
       };
       const dbModule = {
         collection: (model) => {
@@ -225,7 +224,7 @@ describe("MongoFactory", function () {
         await factory.clearAll();
         assert.fail("Expected function to reject");
       } catch (error) {
-        factory.created.restore();
+        createdStub.mock.restore();
         assert.equal(error.message, "Some error");
       }
     });

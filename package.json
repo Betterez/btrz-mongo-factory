@@ -31,7 +31,5 @@
     "btrz-simple-dao": "4.6.0",
     "json-schema-faker": "0.6.2"
   },
-  "devDependencies": {
-    "sinon": "22.0.0"
-  }
+  "devDependencies": {}
 }
