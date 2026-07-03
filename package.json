@@ -7,7 +7,8 @@
     "test": "node --test --test-force-exit test/*.js",
     "tdd": "node --watch --test test/*.js",
     "preversion": "npm test",
-    "postversion": "git push origin master && git push --tags"
+    "postversion": "git push origin master && git push --tags",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "repository": {
     "type": "git",
